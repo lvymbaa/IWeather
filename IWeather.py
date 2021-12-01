@@ -5,7 +5,6 @@ import speech_recognition as sr
 import pyttsx3
 import datetime
 from fuzzywuzzy import fuzz
-
 # для ответов
 tts = pyttsx3.init()
 rate = tts.getProperty('rate')
@@ -128,31 +127,31 @@ def say_clouds():
 def say_time():
     time = datetime.datetime.now()
     say_message(f"Сейчас {time.hour} {how_to_say(time.hour, 'час')} {time.minute} {how_to_say(time.minute, 'мин')}")
-
+    
 # слушает команду
 def listen_command():
-    r = sr.Recognizer()
-    m = sr.Microphone(device_index=1)
-    with m as source:
-        r.adjust_for_ambient_noise(source, duration=0.1) 
-        audio = r.listen(source)
+    recognizer = sr.Recognizer()
+    microphone = sr.Microphone(device_index=1)
+    with microphone as source:
+        recognizer.adjust_for_ambient_noise(source, duration=0.1) 
+        audio = recognizer.listen(source)
 
     try:
-        cmd = r.recognize_google(audio, language='ru-RU').lower()
+        command = recognizer.recognize_google(audio, language='ru-RU').lower()
 
-        if 'прощай' in cmd:
+        if 'прощай' in command:
             say_message('Было приятно с вами общаться.')
             exit()
         
         for x in opts['alias']:
-            cmd = cmd.replace(x, "").strip()
+            command = command.replace(x, "").strip()
 
         for x in opts['tbr']:
-            cmd = cmd.replace(x, "").strip()
+            command = command.replace(x, "").strip()
 
 
-        cmd = recognize_cmd(cmd)
-        return cmd
+        command = recognize_command(command)
+        return command
 
 
     except sr.UnknownValueError:
@@ -164,11 +163,11 @@ def listen_command():
 #нечеткое сравнение команды cmd с элементами словаря возможных команд
 #c - элемент словаря opts(список возможных произношений)
 #v - возможные произношения команды
-def recognize_cmd(cmd):
+def recognize_command(command):
     RC = {'cmd': '', 'percent': 0}
     for c,v in opts['cmds'].items():
         for x in v:
-            vrt = fuzz.ratio(cmd, x)#степень похожести
+            vrt = fuzz.ratio(command, x)#степень похожести
             if vrt > RC['percent']:
                 RC['cmd'] = c
                 RC['percent'] = vrt
@@ -176,25 +175,25 @@ def recognize_cmd(cmd):
     return RC
 
 # выполнение комманды
-def do_command(cmd):
-    if cmd == "temp":
-        if "сейчас" in cmd:
+def do_command(command):
+    if command == "temp":
+        if "сейчас" in command:
             say_temperature(True)
         else:
             say_temperature(False)
 
-    elif cmd == "press":
+    elif command == "press":
         say_pressure()
 
-    elif cmd == "hum":
+    elif command == "hum":
         say_humidity()
 
-    elif cmd == "cloud":
+    elif command == "cloud":
         say_clouds()
+        
 
-    elif cmd == "time":
+    elif command == "time":
         say_time()
-
     else:
         pass
 
@@ -204,26 +203,27 @@ def say_message(message):
     tts.runAndWait()
     tts.stop()
 
-#флаг приветствия
-greeting = False
 
-while greeting is not True:
-    r = sr.Recognizer()
-    m = sr.Microphone(device_index=1)
-    with m as source:
-        r.adjust_for_ambient_noise(source, duration=0.1) 
-        audio = r.listen(source)
+
+""" while greeting is not True:
+    recognizer = sr.Recognizer()
+    microphone = sr.Microphone(device_index=1)
+    with microphone as source:
+        recognizer.adjust_for_ambient_noise(source, duration=0.1) 
+        audio = recognizer.listen(source)
     try:
-        speech = r.recognize_google(audio, language='ru-RU').lower()
+        speech = recognizer.recognize_google(audio, language='ru-RU').lower()
         if 'привет' and 'сима' in speech:
             greeting = True
             say_message("Здравствуйте. Чем я могу вам помочь?")
     except:
         pass
+ """
 
-while True:
+def main_func():
+    say_message("Здравствуйте. Чем я могу вам помочь?")
     try:
-        cmd = listen_command()
-        do_command(cmd['cmd'])
+        command = listen_command()
+        do_command(command['cmd'])
     except:
         pass
